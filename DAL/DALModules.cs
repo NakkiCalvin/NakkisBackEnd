@@ -10,6 +10,7 @@ namespace DAL
         {
             builder.RegisterType<ApplicationContext>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<Repository<Book>>().AsImplementedInterfaces().InstancePerLifetimeScope();
+            builder.RegisterType<Repository<Product>>().AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterAssemblyTypes(ThisAssembly)
                 .Where(x => x.Name.EndsWith("Finder"))
                 .AsImplementedInterfaces()

@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace API.Controllers
 {
-    [Route("Account")]
+    [Route("api/account")]
     [EnableCors("Policy")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -38,20 +38,18 @@ namespace API.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        [Route("LogOut")]
+        [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.Logout();
             var identity = (ClaimsIdentity)this.User.Identity;
             var userEmail = identity.FindFirst(JwtRegisteredClaimNames.Sub).Value;
             var user = await _userManager.GetUserByEmail(userEmail);
-            return Ok();
             _logger.LogTrace("User logged out");
+            return Ok();
         }
 
-        [HttpPost]
-        [Route("Register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterUserModel model)
         {
             _logger.LogTrace($"{model.Email}, registration processing...");
@@ -67,8 +65,7 @@ namespace API.Controllers
             return Ok(mapUser);
         }
 
-        [HttpPost]
-        [Route("Login")]
+        [HttpPost("login")]
         public async Task<object> GenerateToken(LoginModel authorize)
         {
             _logger.LogTrace($"{authorize.Email} started to logging in...");
@@ -83,8 +80,33 @@ namespace API.Controllers
             return configuredToken;
         }
 
-        [HttpPost]
-        [Route("CreateRole")]
+        //[HttpGet("{userId}/cart")]
+        //public async Task<Cart> GetUserCart([FromRoute]Guid id)
+        //{
+        //    return await _bookService.GetBook(id);
+        //}
+
+        //[HttpPost("{userId}/cart")]
+        //public async Task<object> UpdateUserCart(CartModel cart)
+        //{
+        //    if (book.Content != null)
+        //    {
+        //        var user = await GetActualUser();
+        //        _logger.LogTrace($"{user.Email} trying to Add new book");
+
+        //        Book newBook = Mapper.Map<RequestBookModel, Book>(book);
+        //        newBook.AuthorId = user.Id.ToString();
+        //        newBook.ReleaseDate = DateTime.Now;
+        //        _bookService.Create(newBook);
+
+        //        _logger.LogTrace($"{newBook.Title} was created by {user.Email}");
+        //        return Ok(newBook);
+        //    }
+
+        //    return BadRequest("Error");
+        //}
+
+        [HttpPost("createRole")]
         public async Task<RoleModel> Create(RoleModel roleModel)
         {
             _logger.LogTrace($"Creating {roleModel.Name} role...");

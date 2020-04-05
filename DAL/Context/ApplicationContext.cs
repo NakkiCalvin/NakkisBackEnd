@@ -26,6 +26,10 @@ namespace DAL.Context
         {
             base.OnModelCreating(modelBuilder);
 
+            //modelBuilder.Entity<Cart>()
+            //    .HasOne(a => a.User)
+            //    .WithOne(b => b.Cart)
+            //    .HasForeignKey<AuthorBiography>(b => b.AuthorRef);
             modelBuilder.Entity<CartItem>()
                 .HasKey(bc => new { bc.CartId, bc.ProductId });
             modelBuilder.Entity<CartItem>()
