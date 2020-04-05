@@ -1,10 +1,9 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace DAL.Migrations
 {
-    public partial class Initial : Migration
+    public partial class initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -48,19 +47,29 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Books",
+                name: "Categories",
                 columns: table => new
                 {
-                    BookId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    Title = table.Column<string>(nullable: true),
-                    ReleaseDate = table.Column<DateTime>(nullable: false),
-                    AuthorId = table.Column<string>(nullable: true),
-                    Content = table.Column<string>(nullable: true)
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CategoryName = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Books", x => x.BookId);
+                    table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Departments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DepartmentName = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Departments", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -68,7 +77,7 @@ namespace DAL.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     RoleId = table.Column<Guid>(nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
                     ClaimValue = table.Column<string>(nullable: true)
@@ -89,7 +98,7 @@ namespace DAL.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<Guid>(nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
                     ClaimValue = table.Column<string>(nullable: true)
@@ -118,7 +127,6 @@ namespace DAL.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
-                    table.UniqueConstraint("AK_AspNetUserLogins_Id", x => x.Id);
                     table.ForeignKey(
                         name: "FK_AspNetUserLogins_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -164,11 +172,111 @@ namespace DAL.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
-                    table.UniqueConstraint("AK_AspNetUserTokens_Id", x => x.Id);
                     table.ForeignKey(
                         name: "FK_AspNetUserTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Carts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TotalQty = table.Column<int>(nullable: false),
+                    TotalPrice = table.Column<double>(nullable: false),
+                    UserId = table.Column<Guid>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Carts_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ImagePath = table.Column<string>(nullable: true),
+                    Title = table.Column<string>(nullable: true),
+                    Description = table.Column<string>(nullable: true),
+                    Price = table.Column<double>(nullable: false),
+                    Color = table.Column<string>(nullable: true),
+                    Size = table.Column<string>(nullable: true),
+                    Quantity = table.Column<int>(nullable: false),
+                    DepartmentId = table.Column<int>(nullable: false),
+                    CategoryId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Products_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CartItems",
+                columns: table => new
+                {
+                    CartId = table.Column<int>(nullable: false),
+                    ProductId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CartItems", x => new { x.CartId, x.ProductId });
+                    table.ForeignKey(
+                        name: "FK_CartItems_Carts_CartId",
+                        column: x => x.CartId,
+                        principalTable: "Carts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Variants",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(nullable: false),
+                    ImagePath = table.Column<string>(nullable: true),
+                    Color = table.Column<string>(nullable: true),
+                    Size = table.Column<string>(nullable: true),
+                    Quantity = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Variants", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Variants_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -211,6 +319,31 @@ namespace DAL.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItems_ProductId",
+                table: "CartItems",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Carts_UserId",
+                table: "Carts",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_CategoryId",
+                table: "Products",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_DepartmentId",
+                table: "Products",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Variants_ProductId",
+                table: "Variants",
+                column: "ProductId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -231,13 +364,28 @@ namespace DAL.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Books");
+                name: "CartItems");
+
+            migrationBuilder.DropTable(
+                name: "Variants");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
+                name: "Carts");
+
+            migrationBuilder.DropTable(
+                name: "Products");
+
+            migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Departments");
         }
     }
 }

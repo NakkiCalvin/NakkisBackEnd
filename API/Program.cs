@@ -18,7 +18,7 @@ namespace API
     {
         public static void Main(string[] args)
         {
-            GlobalDiagnosticsContext.Set("connectionString", "Server=NAKKICALVINSPC\\SQLEXPRESS;Database=BookAppDb;Trusted_Connection=True;");
+            GlobalDiagnosticsContext.Set("connectionString", "Server=PC1;Database=NakkisAppDb;Trusted_Connection=True;");
             var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
             try
             {

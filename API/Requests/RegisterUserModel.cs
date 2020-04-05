@@ -10,6 +10,8 @@ namespace API.Requests
     {
         public string Email { get; set; }
         public string Password { get; set; }
+        public string fullname { get; set; }
+        public string verifyPassword { get; set; }
 
         public RegisterUserModel() { }
 

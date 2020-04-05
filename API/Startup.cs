@@ -36,7 +36,10 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc()
+            services.AddMvc(opt =>
+                {
+                    opt.EnableEndpointRouting = false;
+                })
                 .AddFluentValidation(fv =>
                 {
                     fv.RegisterValidatorsFromAssemblyContaining<RegisterValidator>();
@@ -44,10 +47,10 @@ namespace API
                     fv.RegisterValidatorsFromAssemblyContaining<LoginValidator>();
                 })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
+            
             services.AddDbContext<ApplicationContext>(options =>
                 {
-                    options.UseSqlServer(Configuration["ConnectionStrings:BookApp"]);
+                    options.UseSqlServer(Configuration["ConnectionStrings:NakkisApp"]);
                 });
 
             services.AddIdentity<User, Role>(options =>
@@ -60,7 +63,12 @@ namespace API
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Books);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Carts);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().CartItems);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Categories);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Products);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Departments);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Variants);
 
             services.AddCors(options =>
             {

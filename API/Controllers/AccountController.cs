@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using API.Requests;
 using AutoMapper;
@@ -38,9 +40,13 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("LogOut")]
-        public async Task Logout()
+        public async Task<IActionResult> Logout()
         {
             await _signInManager.Logout();
+            var identity = (ClaimsIdentity)this.User.Identity;
+            var userEmail = identity.FindFirst(JwtRegisteredClaimNames.Sub).Value;
+            var user = await _userManager.GetUserByEmail(userEmail);
+            return Ok();
             _logger.LogTrace("User logged out");
         }
 
@@ -63,13 +69,15 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("Login")]
-        public object GenerateToken(LoginModel authorize)
+        public async Task<object> GenerateToken(LoginModel authorize)
         {
             _logger.LogTrace($"{authorize.Email} started to logging in...");
+
+            var user = await _userManager.GetUserByEmail(authorize.Email);
+            
             var configuredToken = new
             {
-                access_token = _tokenService.GetEncodedJwtToken(authorize.Email),
-                userEmail = authorize.Email,
+                user_token = new { user_id = user.Id, user_name = user.UserName, token = _tokenService.GetEncodedJwtToken(authorize.Email) }
             };
             _logger.LogTrace($"{authorize.Email} successfully logging in...");
             return configuredToken;

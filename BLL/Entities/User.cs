@@ -16,8 +16,13 @@ namespace BLL.Entities
 
     public class UserRole : IdentityUserRole<Guid>
     {
-        [Key]
-        public Guid Id => Guid.NewGuid();
+        //public Guid UserId { get; set; }
+        //public User User { get; set; }
+        //public Guid RoleId { get; set; }
+        //public Role Role { get; set; }
+        //[Key]
+        //public Guid Id => Guid.NewGuid();
+        //public Guid Id { get; set; }
     }
 
     public class UserLogin : IdentityUserLogin<Guid>
