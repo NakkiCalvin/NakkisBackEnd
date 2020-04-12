@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using API.Requests;
@@ -21,6 +23,9 @@ namespace API.Controllers
         private readonly IUserManager _userManager;
         private readonly IRoleManager _roleManager;
         private readonly ITokenService _tokenService;
+        private readonly ICartService _cartService;
+        private readonly ICartItemsService _cartItemService;
+        private readonly IProductService _productService;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
@@ -28,6 +33,9 @@ namespace API.Controllers
             ISignInManager signInManager,
             IRoleManager roleManager,
             ITokenService tokenService,
+            ICartService cartService,
+            ICartItemsService cartItemService,
+            IProductService productService,
             ILogger<AccountController> logger
             )
         {
@@ -35,6 +43,9 @@ namespace API.Controllers
             _signInManager = signInManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
+            _cartService = cartService;
+            _cartItemService = cartItemService;
+            _productService = productService;
             _logger = logger;
         }
 
@@ -80,31 +91,119 @@ namespace API.Controllers
             return configuredToken;
         }
 
-        //[HttpGet("{userId}/cart")]
-        //public async Task<Cart> GetUserCart([FromRoute]Guid id)
-        //{
-        //    return await _bookService.GetBook(id);
-        //}
+        [HttpGet("{userId}/cart")]
+        public object GetUserCart([FromRoute]Guid userId)
+        {
+            var cart = _cartService.GetCartByUserId(userId);
+            var cartItmes = _cartItemService.GetCartItemsByCartId(cart.Id);
+            var dtoCart = Mapper.Map<Cart, CartModel>(cart);
+            var dtoCartItems = Mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDto>>(cartItmes);
+            foreach (var item in dtoCartItems)
+            {
+                item.Item.CartItems = null;
+            }
 
-        //[HttpPost("{userId}/cart")]
-        //public async Task<object> UpdateUserCart(CartModel cart)
-        //{
-        //    if (book.Content != null)
-        //    {
-        //        var user = await GetActualUser();
-        //        _logger.LogTrace($"{user.Email} trying to Add new book");
+            dtoCart.Items = dtoCartItems;
+            var res = new { cart = dtoCart };
+            return res;
+        }
 
-        //        Book newBook = Mapper.Map<RequestBookModel, Book>(book);
-        //        newBook.AuthorId = user.Id.ToString();
-        //        newBook.ReleaseDate = DateTime.Now;
-        //        _bookService.Create(newBook);
+        [HttpPost("{userId}/cart")]
+        public object PostUserCart(RequestCart model)
+        {
+            var cart = _cartService.GetCartByUserId(model.UserId);
+            var product = _productService.GetProduct(model.ProductId);
 
-        //        _logger.LogTrace($"{newBook.Title} was created by {user.Email}");
-        //        return Ok(newBook);
-        //    }
+            if (cart == null)
+            {
+                _cartService.Create(new Cart { UserId = model.UserId });
+                var newCart = _cartService.GetCartByUserId(model.UserId);
+                _cartItemService.Create(new CartItem { CartId = newCart.Id, ProductId = product.Id, Price = product.Price, Qty = 1 });
+                newCart.TotalPrice = product.Price;
+                newCart.TotalQty = 1;
+                _cartService.Update(newCart);
 
-        //    return BadRequest("Error");
-        //}
+                return mapCartResponse(model.UserId);
+            }
+            var entitiesCartItems = _cartItemService.GetCartItemsByCartId(cart.Id);
+            var cartItem = entitiesCartItems.Where(_ => _.ProductId == model.ProductId).FirstOrDefault();
+            if (cartItem == null)
+            {
+                _cartItemService.Create(new CartItem { CartId = cart.Id, ProductId = product.Id, Price = product.Price, Qty = 1 });
+
+                var newCartItems = _cartItemService.GetCartItemsByCartId(cart.Id);
+                cart.TotalPrice = Math.Round(newCartItems.Sum(_ => _.Price), 2);
+                cart.TotalQty = newCartItems.Sum(_ => _.Qty);
+                _cartService.Update(cart);
+
+                return mapCartResponse(model.UserId);
+            }
+            if (model.increase)
+            {
+                cartItem.Price = Math.Round(cartItem.Price + product.Price, 2);
+                cartItem.Qty = cartItem.Qty + 1;
+                _cartItemService.Update(cartItem);
+
+                var newCartItems = _cartItemService.GetCartItemsByCartId(cart.Id);
+                cart.TotalPrice = Math.Round(newCartItems.Sum(_ => _.Price), 2);
+                cart.TotalQty = newCartItems.Sum(_ => _.Qty);
+                _cartService.Update(cart);
+
+                return mapCartResponse(model.UserId);
+            }
+            if (model.decrease)
+            {
+                if (cartItem.Qty == 1)
+                {
+                    _cartItemService.Delete(cartItem);
+
+                    var newCartItems = _cartItemService.GetCartItemsByCartId(cart.Id);
+                    if (newCartItems == null)
+                    {
+                        cart.TotalPrice = 0;
+                        cart.TotalQty = 0;
+                        _cartService.Update(cart);
+                    }
+                    else
+                    {
+                        cart.TotalPrice = Math.Round(newCartItems.Sum(_ => _.Price), 2);
+                        cart.TotalQty = newCartItems.Sum(_ => _.Qty);
+                        _cartService.Update(cart);
+                    }
+                }
+                else
+                {
+                    cartItem.Price = Math.Round(cartItem.Price - product.Price, 2);
+                    cartItem.Qty = cartItem.Qty - 1;
+                    _cartItemService.Update(cartItem);
+
+                    var newCartItems = _cartItemService.GetCartItemsByCartId(cart.Id);
+                    cart.TotalPrice = Math.Round(newCartItems.Sum(_ => _.Price), 2);
+                    cart.TotalQty = newCartItems.Sum(_ => _.Qty);
+                    _cartService.Update(cart);
+                }
+                return mapCartResponse(model.UserId);
+            }
+
+            return BadRequest("Error");
+        }
+
+        private object mapCartResponse(Guid userId)
+        {
+            var userCart = _cartService.GetCartByUserId(userId);
+            var cartItmes = _cartItemService.GetCartItemsByCartId(userCart.Id);
+            var dtoCart = Mapper.Map<Cart, CartModel>(userCart);
+            var dtoCartItems = Mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDto>>(cartItmes);
+            foreach (var item in dtoCartItems)
+            {
+                item.Item.CartItems = null;
+                item.Item.Category = null;
+                item.Item.Department = null;
+            }
+
+            dtoCart.Items = dtoCartItems;
+            return new { cart = dtoCart };
+        } 
 
         [HttpPost("createRole")]
         public async Task<RoleModel> Create(RoleModel roleModel)

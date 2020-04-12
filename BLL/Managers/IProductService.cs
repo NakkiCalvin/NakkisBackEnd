@@ -9,7 +9,7 @@ namespace BLL.Managers
     public interface IProductService
     {
         Product GetProduct(int id);
-        IEnumerable<Product> GetAll();
+        IEnumerable<Product> GetAll(string department, string category, string order, string range);
         void Create(Product product);
         void Update(Product product);
         void Delete(Product product);

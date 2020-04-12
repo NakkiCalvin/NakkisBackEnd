@@ -27,9 +27,9 @@ namespace BLL.Services
             return _finder.GetById(id);
         }
 
-        public IEnumerable<Product> GetAll()
+        public IEnumerable<Product> GetAll(string department, string category, string order, string range)
         {
-            return _finder.GetAll();
+            return _finder.GetAll(department, category, order, range);
         }
 
         public void Create(Product product)

@@ -1,17 +1,16 @@
-﻿using System;
+﻿using BLL.Entities;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BLL.Entities
+namespace API.Responses
 {
-    public class Department
+    public class ResponseDepartmentDto
     {
         public int Id { get; set; }
         public string DepartmentName { get; set; }
         //public string Categories { get; set; }
-        [NotMapped]
         public IEnumerable<Category> Categories { get; set; }
-        public ICollection<Product> Products { get; set; }
     }
 }

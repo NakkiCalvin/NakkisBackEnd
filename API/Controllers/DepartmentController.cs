@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BLL.Entities;
+using BLL.Managers;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,25 +20,39 @@ namespace API.Controllers
         //private readonly IRoleManager _roleManager;
         //private readonly ITokenService _tokenService;
         //private readonly ILogger<AccountController> _logger;
+        private readonly IDepartmentService _service;
+        private readonly ICategoryService _categoryService;
 
-        //public DepartmentController(
+        public DepartmentController(
         //    IUserManager userManager,
         //    ISignInManager signInManager,
         //    IRoleManager roleManager,
         //    ITokenService tokenService,
         //    ILogger<AccountController> logger
-        //    )
-        //{
-        //    _userManager = userManager;
-        //    _signInManager = signInManager;
-        //    _roleManager = roleManager;
-        //    _tokenService = tokenService;
-        //    _logger = logger;
-        //}
-        //[HttpGet]
-        //public async Task<Department[]> GetAllDepartments()
-        //{
-        //    return await _bookService.GetBook(id);
-        //}
+        IDepartmentService service,
+        ICategoryService categoryService
+            )
+        {
+            //    _userManager = userManager;
+            //    _signInManager = signInManager;
+            //    _roleManager = roleManager;
+            //    _tokenService = tokenService;
+            //    _logger = logger;
+            _service = service;
+            _categoryService = categoryService;
+        }
+
+        [HttpGet]
+        public object GetAllDepartments()
+        {
+            var departments = _service.GetAll();
+            var categories = _categoryService.GetAll();
+            foreach (var entity in departments)
+            {
+                entity.Categories = categories;
+            }
+            var res = new { departments };
+            return res;
+        }
     }
 }

@@ -16,12 +16,39 @@ namespace DAL.Finder
 
         public Product GetById(int id)
         {
-            return AsQueryable().FirstOrDefault(x => x.Id == id);
+            return AsQueryable().Include(c => c.Department).Include(y => y.Category).FirstOrDefault(x => x.Id == id);
         }
 
-        public IEnumerable<Product> GetAll()
+        public IEnumerable<Product> GetAll(string department, string category, string order, string range)
         {
-            return AsQueryable().ToList();
+            var result = AsQueryable().Include(c => c.Department).Include(y => y.Category).ToList();
+            if (category != null)
+            {
+                result = result.Where(_ => _.Category.CategoryName == category).ToList();
+            }
+            if (department != null)
+            {
+                result = result.Where(_ => _.Department.DepartmentName == department).ToList();
+            }
+            if (order != null)
+            {
+                if (order == "price")
+                {
+                    result = result.OrderBy(_ => _.Price).ToList();
+                }
+                if (order == "-price")
+                {
+                    result = result.OrderByDescending(_ => _.Price).ToList();
+                }
+            }
+            if (range != null)
+            {
+                if (range == "0-29")
+                {
+                    result = result.Where(_ => _.Price < 29).ToList();
+                }
+            }
+            return result;
         }
 
         public bool IsProductExists(Product product)
