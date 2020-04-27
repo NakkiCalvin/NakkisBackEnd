@@ -45,5 +45,6 @@ namespace BLL.Entities
     public class User : IdentityUser<Guid>
     {
         public Cart Cart { get; set; }
+        public Order Order { get; set; }
     }
 }

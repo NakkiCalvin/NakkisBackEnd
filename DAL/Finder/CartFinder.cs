@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DAL.Finder
 {
@@ -17,6 +18,10 @@ namespace DAL.Finder
         public Cart GetCartByUserId(Guid userId)
         {
             return AsQueryable().Include(c => c.User).Include(y => y.CartItems).FirstOrDefault(x => x.UserId == userId);
+        }
+
+        public async Task<Cart> GetCartById(int cartId) {
+            return await AsQueryable().Where(x => x.Id == cartId).FirstOrDefaultAsync();
         }
     }
 }

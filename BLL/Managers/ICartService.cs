@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BLL.Managers
 {
@@ -10,5 +11,7 @@ namespace BLL.Managers
         Cart GetCartByUserId(Guid userId);
         void Create(Cart cart);
         void Update(Cart cart);
+
+        Task<Cart> GetCartById(int cartId);
     }
 }

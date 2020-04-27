@@ -22,6 +22,7 @@ namespace BLL.Entities
         //public string Category { get; set; }
 
         public ICollection<CartItem> CartItems { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; }
         public ICollection<Variant> Variants { get; set; }
     }
 }

@@ -11,5 +11,6 @@ namespace BLL.Managers
         void Create(CartItem cartItem);
         void Update(CartItem cartItem);
         void Delete(CartItem cartItem);
+        void Delete(IEnumerable<CartItem> cartItems);
     }
 }

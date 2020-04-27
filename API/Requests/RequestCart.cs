@@ -9,6 +9,7 @@ namespace API.Requests
     {
         public Guid UserId { get; set; }
         public int ProductId { get; set; }
+        public int? VariantId { get; set; }
         public bool increase { get; set; }
         public bool decrease { get; set; }
     }

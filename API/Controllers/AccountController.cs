@@ -8,6 +8,8 @@ using API.Requests;
 using AutoMapper;
 using BLL.Entities;
 using BLL.Managers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -49,18 +51,20 @@ namespace API.Controllers
             _logger = logger;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _signInManager.Logout();
             var identity = (ClaimsIdentity)this.User.Identity;
-            var userEmail = identity.FindFirst(JwtRegisteredClaimNames.Sub).Value;
-            var user = await _userManager.GetUserByEmail(userEmail);
+            //var userEmail = identity.FindFirst(JwtRegisteredClaimNames.Sub).Value;
+            //var user = await _userManager.GetUserByEmail(userEmail);
+            await _signInManager.Logout();
             _logger.LogTrace("User logged out");
             return Ok();
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterUserModel model)
         {
             _logger.LogTrace($"{model.Email}, registration processing...");
@@ -77,6 +81,7 @@ namespace API.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<object> GenerateToken(LoginModel authorize)
         {
             _logger.LogTrace($"{authorize.Email} started to logging in...");
@@ -91,6 +96,7 @@ namespace API.Controllers
             return configuredToken;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("{userId}/cart")]
         public object GetUserCart([FromRoute]Guid userId)
         {
@@ -108,6 +114,7 @@ namespace API.Controllers
             return res;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("{userId}/cart")]
         public object PostUserCart(RequestCart model)
         {

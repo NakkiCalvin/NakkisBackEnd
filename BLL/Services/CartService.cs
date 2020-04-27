@@ -5,6 +5,7 @@ using BLL.Managers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BLL.Services
 {
@@ -24,6 +25,10 @@ namespace BLL.Services
         public Cart GetCartByUserId(Guid userId)
         {
             return _finder.GetCartByUserId(userId);
+        }
+
+        public async Task<Cart> GetCartById(int cartId) {
+            return await _finder.GetCartById(cartId);
         }
 
         public void Create(Cart cart)

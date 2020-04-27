@@ -63,6 +63,8 @@ namespace API
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Orders);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().OrderItems);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Carts);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().CartItems);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Categories);

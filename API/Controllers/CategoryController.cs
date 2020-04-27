@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BLL.Managers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,31 +12,42 @@ namespace API.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        //private readonly ISignInManager _signInManager;
-        //private readonly IUserManager _userManager;
-        //private readonly IRoleManager _roleManager;
-        //private readonly ITokenService _tokenService;
-        //private readonly ILogger<AccountController> _logger;
+        private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService;
+        private readonly IDepartmentService _departmentService;
 
-        //public CategoryController(
-        //    IUserManager userManager,
-        //    ISignInManager signInManager,
-        //    IRoleManager roleManager,
-        //    ITokenService tokenService,
-        //    ILogger<AccountController> logger
-        //    )
-        //{
-        //    _userManager = userManager;
-        //    _signInManager = signInManager;
-        //    _roleManager = roleManager;
-        //    _tokenService = tokenService;
-        //    _logger = logger;
-        //}
+        public CategoryController(
+            IProductService productService,
+            ICategoryService categoryService,
+            IDepartmentService departmentService
+            )
+        {
+            _productService = productService;
+            _departmentService = departmentService;
+            _categoryService = categoryService;
+        }
 
-        //[HttpGet]
-        //public async Task<Category[]> GetAllCategories()
-        //{
-        //    return await _bookService.GetBook(id);
-        //}
+        [HttpGet("filter")]
+        public object GetAllFiltered([FromQuery] string query)
+        {
+            var title = _productService.GetAll(null, null, null, null).Select(x => x.Title);
+            var category = _categoryService.GetAll().Select(x => x.CategoryName);
+            var department = _departmentService.GetAll().Select(x => x.DepartmentName);
+
+            if (query == null)
+            {
+                var filter = new { department, category, title };
+                return new { filter };
+            }
+            else
+            {
+                title = title.Where(x => x.Contains(query));
+                category = category.Where(x => x.Contains(query));
+                department = department.Where(x => x.Contains(query));
+
+                var filter = new { department, category, title };
+                return new { filter };
+            }
+        }
     }
 }

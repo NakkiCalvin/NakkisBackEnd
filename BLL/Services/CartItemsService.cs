@@ -46,5 +46,12 @@ namespace BLL.Services
             _repository.Delete(cartItem);
             _unitOfWork.Commit();
         }
+
+        public void Delete(IEnumerable<CartItem> cartItems)
+        {
+            if (cartItems == null) return;
+            _repository.Delete(cartItems);
+            _unitOfWork.Commit();
+        }
     }
 }

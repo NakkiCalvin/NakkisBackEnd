@@ -28,6 +28,7 @@ namespace API.Mapping
                 .ForMember(x => x.Variants, opt => opt.Ignore())
                 .ForMember(x => x.Department, opt => opt.Ignore())
                 .ForMember(x => x.Category, opt => opt.Ignore())
+                .ForMember(x => x.OrderItems, opt => opt.Ignore())
                 .ReverseMap()
                 .ForMember(x => x.Category, opt => opt.MapFrom(src => src.Category.CategoryName))
                 .ForMember(x => x.Department, opt => opt.MapFrom(src => src.Department.DepartmentName));

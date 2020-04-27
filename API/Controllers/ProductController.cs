@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using API.PayPal;
 using API.Requests;
@@ -8,11 +12,14 @@ using API.Responses;
 using AutoMapper;
 using BLL.Entities;
 using BLL.Managers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 //using PayPal.Api;
 using PayPalCheckoutSdk.Orders;
+using Order = PayPalCheckoutSdk.Orders.Order;
 //using PayPalCheckoutSdk.Payments;
 
 namespace API.Controllers
@@ -23,30 +30,61 @@ namespace API.Controllers
     public class ProductController : ControllerBase
     {
         //private readonly ISignInManager _signInManager;
-        //private readonly IUserManager _userManager;
+        private readonly IUserManager _userManager;
         //private readonly IRoleManager _roleManager;
         //private readonly ITokenService _tokenService;
         //private readonly ILogger<AccountController> _logger;
         private readonly IProductService _service;
         private readonly IVariantService _variantService;
+        private readonly ICartService _cartService;
+        private readonly ICartItemsService _cartItemService;
+        private readonly IOrderService _orderService;
+        private readonly IOrderItemService _orderItemService;
 
         public ProductController(
-            //IUserManager userManager,
+            IUserManager userManager,
             //ISignInManager signInManager,
             //IRoleManager roleManager,
             //ITokenService tokenService,
             //ILogger<AccountController> logger
             IProductService service,
-            IVariantService variantService
+            IVariantService variantService,
+            ICartService cartService,
+            ICartItemsService cartItemService,
+            IOrderService orderService,
+            IOrderItemService orderItemService
             )
         {
             _service = service;
+            _cartService = cartService;
+            _cartItemService = cartItemService;
             _variantService = variantService;
-            //_userManager = userManager;
+            _orderItemService = orderItemService;
+            _orderService = orderService;
+            _userManager = userManager;
             //_signInManager = signInManager;
             //_roleManager = roleManager;
             //_tokenService = tokenService;
             //_logger = logger;
+        }
+
+        [HttpGet("search")]
+        public object GetAllProducts([FromQuery] string query)
+        {
+            if (query != null)
+            {
+                var entities = _service.GetAll(null, null, null, null).Where(x => x.Title == query || x.Category.CategoryName == query || x.Department.DepartmentName == query);
+                var products = Mapper.Map<IEnumerable<ResponseProductModel>>(entities);
+                var res = new { products };
+                return res;
+            }
+            else
+            {
+                var entities = _service.GetAll(null, null, null, null);
+                var products = Mapper.Map<IEnumerable<ResponseProductModel>>(entities);
+                var res = new { products };
+                return res;
+            }
         }
 
         [HttpGet]
@@ -82,6 +120,7 @@ namespace API.Controllers
         }
 
         [HttpGet("payment/success")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<object> VerifyOrder([FromQuery] string orderId)
         {
             // Construct a request object and set desired parameters
@@ -112,6 +151,31 @@ namespace API.Controllers
             {
                 Console.WriteLine("\t{0}: {1}\tCall Type: {2}", link.Rel, link.Href, link.Method);
             }
+
+            if (result.Status == "APPROVED")
+            {
+                var identity = (ClaimsIdentity)this.User.Identity;
+                var userEmail = identity.FindFirst(JwtRegisteredClaimNames.Sub).Value;
+                var user = await _userManager.GetUserByEmail(userEmail);
+
+                var userCart = _cartService.GetCartByUserId(user.Id);
+                var order = new BLL.Entities.Order { OrderDate = DateTimeOffset.Now, UserId = user.Id, TotalSum = userCart.TotalPrice };
+                _orderService.Create(order);
+
+                foreach (var item in userCart.CartItems)
+                {
+                    var orderitem = new OrderItem { OrderId = order.Id, ProductId = item.ProductId, Price = item.Price, Qty = item.Qty };
+                    _orderItemService.Create(orderitem);
+                }
+
+                _cartItemService.Delete(userCart.CartItems);
+
+                userCart.CartItems = null;
+                userCart.TotalPrice = 0;
+                userCart.TotalQty = 0;
+                _cartService.Update(userCart);
+            }
+
             AmountWithBreakdown amount = result.PurchaseUnits[0].AmountWithBreakdown;
             Console.WriteLine("Total Amount: {0} {1}", amount.CurrencyCode, amount.Value);
             var addr = result.PurchaseUnits.FirstOrDefault().ShippingDetail.AddressPortable;
@@ -125,9 +189,35 @@ namespace API.Controllers
         }
 
         [HttpGet("checkout/{cartId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<object> createOrder([FromRoute] int cartId)
         {
             PayPalHttp.HttpResponse response;
+            var currenctCart = await _cartService.GetCartById(cartId);
+            var cartItems = _cartItemService.GetCartItemsByCartId(cartId).ToList();
+            var items = new List<Item>();
+            foreach (var item in cartItems)
+            {
+                items.Add(
+                    new Item
+                    {
+                        Name = item.Product.Title,
+                        Description = item.Product.Description.Substring(0, 10),
+                        Sku = "sku01",
+                        UnitAmount = new Money
+                        {
+                            CurrencyCode = "USD",
+                            Value = item.Product.Price.ToString(CultureInfo.InvariantCulture),
+                        },
+                        //Tax = new Money
+                        //{
+                        //    CurrencyCode = "USD",
+                        //    Value = "10.00"
+                        //},
+                        Quantity = item.Qty.ToString(),
+                        //Category = item.Product.Category.CategoryName,
+                    });
+            }
 
             //var payer = new Payer() { payment_method = "paypal" };
 
@@ -204,26 +294,26 @@ namespace API.Controllers
 
             // Construct a request object and set desired parameters
             // Here, OrdersCreateRequest() creates a POST request to /v2/checkout/orders
-            var order = new OrderRequest()
-            {
-                CheckoutPaymentIntent = "CAPTURE",
-                PurchaseUnits = new List<PurchaseUnitRequest>()
-                {
-                    new PurchaseUnitRequest()
-                    {
-                        AmountWithBreakdown = new AmountWithBreakdown()
-                        {
-                            CurrencyCode = "USD",
-                            Value = "100.00"
-                        }
-                    }
-                },
-                ApplicationContext = new ApplicationContext()
-                {
-                    ReturnUrl = "http://localhost:3000/success_page",
-                    CancelUrl = "http://localhost:3000/cancel_page"
-                }
-            };
+            //var order = new OrderRequest()
+            //{
+            //    CheckoutPaymentIntent = "CAPTURE",
+            //    PurchaseUnits = new List<PurchaseUnitRequest>()
+            //    {
+            //        new PurchaseUnitRequest()
+            //        {
+            //            AmountWithBreakdown = new AmountWithBreakdown()
+            //            {
+            //                CurrencyCode = "USD",
+            //                Value = "100.00"
+            //            }
+            //        }
+            //    },
+            //    ApplicationContext = new ApplicationContext()
+            //    {
+            //        ReturnUrl = "http://localhost:3000/success_page",
+            //        CancelUrl = "http://localhost:3000/cancel_page"
+            //    }
+            //};
             var orderRequest = new OrderRequest()
             {
                 CheckoutPaymentIntent = "CAPTURE",
@@ -246,75 +336,37 @@ namespace API.Controllers
                 AmountWithBreakdown = new AmountWithBreakdown
                 {
                     CurrencyCode = "USD",
-                    Value = "230.00",
+                    Value = currenctCart.TotalPrice.ToString(CultureInfo.InvariantCulture),
                     AmountBreakdown = new AmountBreakdown
                     {
                     ItemTotal = new Money
                     {
                         CurrencyCode = "USD",
-                        Value = "180.00"
+                        Value = currenctCart.TotalPrice.ToString(CultureInfo.InvariantCulture)
                     },
                     Shipping = new Money
                     {
                         CurrencyCode = "USD",
-                        Value = "30.00"
+                        Value = "00.00"
                     },
-                    Handling = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "10.00"
-                    },
-                    TaxTotal = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "20.00"
-                    },
-                    ShippingDiscount = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "10.00"
-                    }
-                    }
-                },
-                Items = new List<Item>
-                {
-                    new Item
-                    {
-                    Name = "T-shirt",
-                    Description = "Green XL",
-                    Sku = "sku01",
-                    UnitAmount = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "90.00"
-                    },
-                    Tax = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "10.00"
-                    },
-                    Quantity = "1",
-                    Category = "PHYSICAL_GOODS"
-                    },
-                    new Item
-                    {
-                    Name = "Shoes",
-                    Description = "Running, Size 10.5",
-                    Sku = "sku02",
-                    UnitAmount = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "45.00"
-                    },
-                    Tax = new Money
-                    {
-                        CurrencyCode = "USD",
-                        Value = "5.00"
-                    },
-                    Quantity = "2",
-                    Category = "PHYSICAL_GOODS"
+                    //Handling = new Money
+                    //{
+                    //    CurrencyCode = "USD",
+                    //    Value = "10.00"
+                    //},
+                    //TaxTotal = new Money
+                    //{
+                    //    CurrencyCode = "USD",
+                    //    Value = "20.00"
+                    //},
+                    //ShippingDiscount = new Money
+                    //{
+                    //    CurrencyCode = "USD",
+                    //    Value = "10.00"
+                    //}
                     }
                 },
+                Items = items,
                 ShippingDetail = new ShippingDetail
                 {
                     Name = new Name

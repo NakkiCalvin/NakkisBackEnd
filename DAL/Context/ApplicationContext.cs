@@ -21,7 +21,9 @@ namespace DAL.Context
         public DbSet<Category> Categories { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
-
+        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<Availability> Availabilities { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -39,6 +41,20 @@ namespace DAL.Context
             modelBuilder.Entity<CartItem>()
                 .HasOne(bc => bc.Product)
                 .WithMany(c => c.CartItems)
+                .HasForeignKey(bc => bc.ProductId);
+            //modelBuilder.Entity<Order>()
+            //    .HasOne(a => a.User)
+            //    .WithOne(b => b.Order)
+            //    .HasForeignKey<User>(b => b.OrderId);
+            modelBuilder.Entity<OrderItem>()
+                .HasKey(bc => new { bc.OrderId, bc.ProductId });
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(bc => bc.Order)
+                .WithMany(b => b.OrderItems)
+                .HasForeignKey(bc => bc.OrderId);
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(bc => bc.Product)
+                .WithMany(c => c.OrderItems)
                 .HasForeignKey(bc => bc.ProductId);
         }
     }

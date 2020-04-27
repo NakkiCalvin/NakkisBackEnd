@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace BLL.Finders
 {
-    public interface ICartFinder
+    public interface IOrderFinder
     {
-        Cart GetCartByUserId(Guid userId);
-
-        Task<Cart> GetCartById(int cartId);
+        Order GetOrderByUserId(Guid userId);
+        Task<Order> GetOrderById(int orderId);
     }
 }
