@@ -19,5 +19,6 @@ namespace API.Responses
         public int DepartmentId { get; set; }
         public int CategoryId { get; set; }
         public string Category { get; set; }
+        public IEnumerable<string> VariantSizes { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
@@ -45,6 +46,6 @@ namespace BLL.Entities
     public class User : IdentityUser<Guid>
     {
         public Cart Cart { get; set; }
-        public Order Order { get; set; }
+        public ICollection<Order> Orders { get; set; }
     }
 }

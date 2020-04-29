@@ -16,12 +16,39 @@ namespace DAL.Finder
 
         public Product GetById(int id)
         {
-            return AsQueryable().Include(c => c.Department).Include(y => y.Category).FirstOrDefault(x => x.Id == id);
+            var product = AsQueryable().FirstOrDefault(x => x.Id == id);
+            var allSizeProducts = AsQueryable().Where(_ => _.ImagePath == product.ImagePath && _.Id != product.Id).ToList();
+            var productSizes = allSizeProducts.Select(x => x.Size);
+            product.VariantSizes = productSizes;
+                //sizes.Add(variant.ImagePath, productSizes);
+            return product;
+        }
+
+        public IEnumerable<Product> GetAllProductClean()
+        {
+            return AsQueryable().Include(c => c.Department).Include(y => y.Category).ToList();
+        }
+
+        public IEnumerable<Product> GetVariantsByProductId(int productId)
+        {
+            var product = AsQueryable().FirstOrDefault(_ => _.Id == productId);
+            var allSizeVariants = AsQueryable().Where(_ => _.Title == product.Title && _.ImagePath != product.ImagePath && _.Id != product.Id).ToList();
+            var variants = allSizeVariants.GroupBy(x => x.ImagePath).Select(g => g.First()).ToList();
+            //var sizes = new Dictionary<string, List<string>>();
+            foreach (var variant in variants)
+            {
+                var productSizes = allSizeVariants.Where(y => y.ImagePath == variant.ImagePath).Select(x => x.Size);
+                variant.VariantSizes = productSizes;
+                //sizes.Add(variant.ImagePath, productSizes);
+            }
+            return variants;
         }
 
         public IEnumerable<Product> GetAll(string department, string category, string order, string range)
         {
             var result = AsQueryable().Include(c => c.Department).Include(y => y.Category).ToList();
+            result = result.GroupBy(p => p.Title).Select(g => g.First()).ToList();
+
             if (category != null)
             {
                 result = result.Where(_ => _.Category.CategoryName == category).ToList();

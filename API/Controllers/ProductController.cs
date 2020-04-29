@@ -114,9 +114,12 @@ namespace API.Controllers
         [HttpGet("variants")]
         public object GetAllProductVariants([FromQuery] int productId)
         {
-            var variants = _variantService.GetAllById(productId);
+            var variants = _service.GetVariantsByProductId(productId);
             var res = new { variants };
             return res;
+            //var variants = _variantService.GetAllById(productId);
+            //var res = new { variants };
+            //return res;
         }
 
         [HttpGet("payment/success")]

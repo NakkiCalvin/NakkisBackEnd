@@ -24,13 +24,14 @@ namespace API.Mapping
             cfg.CreateMap<RequestBookModel, Book>();
             cfg.CreateMap<Book, ResponseBookModel>();
             cfg.CreateMap<ResponseProductModel, Product>()
+                .ForMember(x => x.VariantSizes, opt => opt.Ignore())
                 .ForMember(x => x.CartItems, opt => opt.Ignore())
-                .ForMember(x => x.Variants, opt => opt.Ignore())
                 .ForMember(x => x.Department, opt => opt.Ignore())
                 .ForMember(x => x.Category, opt => opt.Ignore())
                 .ForMember(x => x.OrderItems, opt => opt.Ignore())
                 .ReverseMap()
                 .ForMember(x => x.Category, opt => opt.MapFrom(src => src.Category.CategoryName))
+                .ForMember(x => x.VariantSizes, opt => opt.MapFrom(src => src.VariantSizes))
                 .ForMember(x => x.Department, opt => opt.MapFrom(src => src.Department.DepartmentName));
             //cfg.CreateMap<ICollection<ResponseProductModel>, ICollection<Product>>()
             //    .PreserveReferences()

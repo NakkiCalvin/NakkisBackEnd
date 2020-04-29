@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace BLL.Entities
@@ -19,10 +20,12 @@ namespace BLL.Entities
         public Department Department { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; }
+        [NotMapped]
+        public IEnumerable<string> VariantSizes { get; set; }
         //public string Category { get; set; }
 
         public ICollection<CartItem> CartItems { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; }
-        public ICollection<Variant> Variants { get; set; }
+        //public ICollection<Variant> Variants { get; set; }
     }
 }

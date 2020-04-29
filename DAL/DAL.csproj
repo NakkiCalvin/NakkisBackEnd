@@ -20,6 +20,12 @@
     <Compile Remove="Migrations\20200404123022_init.Designer.cs" />
     <Compile Remove="Migrations\20200426181930_AddOrderOneToOne.cs" />
     <Compile Remove="Migrations\20200426181930_AddOrderOneToOne.Designer.cs" />
+    <Compile Remove="Migrations\20200427173851_addRelations.cs" />
+    <Compile Remove="Migrations\20200427173851_addRelations.Designer.cs" />
+    <Compile Remove="Migrations\20200427180955_addRelations.cs" />
+    <Compile Remove="Migrations\20200427180955_addRelations.Designer.cs" />
+    <Compile Remove="Migrations\20200427185645_addRelations.cs" />
+    <Compile Remove="Migrations\20200427185645_addRelations.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

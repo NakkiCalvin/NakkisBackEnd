@@ -11,5 +11,7 @@ namespace BLL.Finders
         Product GetById(int id);
         IEnumerable<Product> GetAll(string department, string category, string order, string range);
         bool IsProductExists(Product product);
+        IEnumerable<Product> GetVariantsByProductId(int productId);
+        IEnumerable<Product> GetAllProductClean();
     }
 }

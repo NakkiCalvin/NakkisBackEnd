@@ -120,6 +120,10 @@ namespace API.Controllers
         {
             var cart = _cartService.GetCartByUserId(model.UserId);
             var product = _productService.GetProduct(model.ProductId);
+            if (model.size != "" || model.size != null)
+            {
+                product = _productService.GetAllProductClean().Where(x => x.Size == model.size && x.ImagePath == product.ImagePath).FirstOrDefault();
+            }
 
             if (cart == null)
             {

@@ -13,5 +13,7 @@ namespace BLL.Managers
         void Create(Product product);
         void Update(Product product);
         void Delete(Product product);
+        IEnumerable<Product> GetVariantsByProductId(int productId);
+        IEnumerable<Product> GetAllProductClean();
     }
 }
