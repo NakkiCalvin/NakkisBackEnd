@@ -26,19 +26,18 @@ namespace DAL.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<int>("Size")
                         .HasColumnType("int");
 
-                    b.Property<int?>("VariantId")
+                    b.Property<int>("VariantId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("VariantId");
 
                     b.ToTable("Availabilities");
                 });
@@ -72,7 +71,7 @@ namespace DAL.Migrations
                     b.Property<int>("CartId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("AvailabilityId")
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("FirstSeenDate")
@@ -84,9 +83,9 @@ namespace DAL.Migrations
                     b.Property<int>("Qty")
                         .HasColumnType("int");
 
-                    b.HasKey("CartId", "ProductId");
+                    b.HasKey("CartId", "AvailabilityId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("AvailabilityId");
 
                     b.ToTable("CartItems");
                 });
@@ -149,7 +148,7 @@ namespace DAL.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("AvailabilityId")
                         .HasColumnType("int");
 
                     b.Property<double>("Price")
@@ -158,9 +157,9 @@ namespace DAL.Migrations
                     b.Property<int>("Qty")
                         .HasColumnType("int");
 
-                    b.HasKey("OrderId", "ProductId");
+                    b.HasKey("OrderId", "AvailabilityId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("AvailabilityId");
 
                     b.ToTable("OrderItems");
                 });
@@ -175,9 +174,6 @@ namespace DAL.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Color")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
@@ -189,12 +185,6 @@ namespace DAL.Migrations
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Size")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
@@ -425,17 +415,20 @@ namespace DAL.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Size")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
 
                     b.ToTable("Variants");
+                });
+
+            modelBuilder.Entity("BLL.Entities.Availability", b =>
+                {
+                    b.HasOne("BLL.Entities.Variant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BLL.Entities.Cart", b =>
@@ -449,15 +442,15 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("BLL.Entities.CartItem", b =>
                 {
-                    b.HasOne("BLL.Entities.Cart", "Cart")
+                    b.HasOne("BLL.Entities.Availability", "Availability")
                         .WithMany("CartItems")
-                        .HasForeignKey("CartId")
+                        .HasForeignKey("AvailabilityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BLL.Entities.Product", "Product")
+                    b.HasOne("BLL.Entities.Cart", "Cart")
                         .WithMany("CartItems")
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -473,15 +466,15 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("BLL.Entities.OrderItem", b =>
                 {
-                    b.HasOne("BLL.Entities.Order", "Order")
+                    b.HasOne("BLL.Entities.Availability", "Availability")
                         .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
+                        .HasForeignKey("AvailabilityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BLL.Entities.Product", "Product")
+                    b.HasOne("BLL.Entities.Order", "Order")
                         .WithMany("OrderItems")
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -555,7 +548,7 @@ namespace DAL.Migrations
             modelBuilder.Entity("BLL.Entities.Variant", b =>
                 {
                     b.HasOne("BLL.Entities.Product", "Product")
-                        .WithMany()
+                        .WithMany("Variants")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

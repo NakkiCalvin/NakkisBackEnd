@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
+using BLL.Entities;
 using BLL.Managers;
 using BLL.TokenConfiguration;
 using Microsoft.Extensions.Configuration;
@@ -15,10 +17,9 @@ namespace BLL.Services
         {
         }
 
-        public string GetEncodedJwtToken(string userEmail)
+        public string GetEncodedJwtToken(IList<string> userRoles, string userEmail)
         {
-            var claims = new List<Claim> { new Claim(JwtRegisteredClaimNames.Sub, userEmail) };
-
+            var claims = new List<Claim> { new Claim(JwtRegisteredClaimNames.Sub, userEmail), new Claim(ClaimsIdentity.DefaultRoleClaimType, userRoles.FirstOrDefault()) };
 
             var jwtToken = new JwtSecurityToken(
                 TokenConfig.ISSUER,

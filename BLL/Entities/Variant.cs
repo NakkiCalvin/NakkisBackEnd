@@ -11,7 +11,8 @@ namespace BLL.Entities
         public Product Product { get; set; }
         public string ImagePath { get; set; }
         public string Color { get; set; }
-        public string Size { get; set; }
-        public int Quantity { get; set; }
+        public ICollection<Availability> Availabilities { get; set; }
+        //public string Size { get; set; }
+        //public int Quantity { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Threading.Tasks;
 using API.Mapping;
 using API.Validators;
@@ -14,6 +15,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -36,10 +38,8 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(opt =>
-                {
-                    opt.EnableEndpointRouting = false;
-                })
+
+            services.AddMvc()
                 .AddFluentValidation(fv =>
                 {
                     fv.RegisterValidatorsFromAssemblyContaining<RegisterValidator>();
@@ -47,7 +47,7 @@ namespace API
                     fv.RegisterValidatorsFromAssemblyContaining<LoginValidator>();
                 })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            
+
             services.AddDbContext<ApplicationContext>(options =>
                 {
                     options.UseSqlServer(Configuration["ConnectionStrings:NakkisApp"]);
@@ -63,6 +63,8 @@ namespace API
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
+            
+
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Orders);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().OrderItems);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Carts);
@@ -71,6 +73,7 @@ namespace API
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Products);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Departments);
             services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Variants);
+            services.AddScoped(x => x.GetRequiredService<ApplicationContext>().Availabilities);
 
             services.AddCors(options =>
             {
@@ -110,6 +113,14 @@ namespace API
                         ValidateIssuerSigningKey = true,
                     };
                 });
+
+            services.AddControllers();
+            //services.AddControllersWithViews();
+
+            //services.AddSpaStaticFiles(configuration =>
+            //{
+            //    configuration.RootPath = "ClientApp/build";
+            //});
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
@@ -139,16 +150,45 @@ namespace API
                 app.UseHsts();
             }
 
-            app.UseAuthentication();
-            app.UseHttpsRedirection();
-            app.UseCors("Policy");
-            
+            //app.UseAuthentication();
+            //app.UseHttpsRedirection();
+            //app.UseCors("Policy");
 
-            
-            app.UseMvc(route =>
+            app.UseRouting();
+            //app.UseStatusCodePagesWithRedirects("/");
+            //app.UseDefaultFiles();
+
+            app.UseStaticFiles();
+
+            //app.UseSpaStaticFiles();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.UseCors("Policy");
+
+            app.UseEndpoints(endpoints =>
             {
-                route.MapRoute("default", "controller/action/{id}");
+                endpoints.MapControllers();
+                endpoints.MapFallbackToFile("index.html");
+                // endpoints.MapFallbackToController("Index", "Home");
             });
+            //app.UseMvc(route =>
+            //{
+            //    route.MapRoute("default", "controller/action/{id}");
+            //});
+
+            //app.MapWhen(context => context.Response.StatusCode == 404 &&
+            //                   !Path.HasExtension(context.Request.Path.Value),
+            //        branch => {
+            //            branch.Use((context, next) => {
+            //                context.Request.Path = new PathString("index.html");
+            //                Console.WriteLine("Path changed to:" + context.Request.Path.Value);
+            //                return next();
+            //            });
+
+            //            branch.UseStaticFiles();
+            //        });
+
             RoleCreation(serviceProvider).Wait();
         }
 

@@ -22,6 +22,10 @@ namespace API.Validators
                 .MustAsync(async (model, email, context) =>
                 {
                     var user = await userManager.GetUserByEmail(model.Email);
+                    if (user == null)
+                    {
+                        return false;
+                    }
                     var passwordResult = await signInManager.CheckPass(user, model.Password, false);
                     return passwordResult.Succeeded;
                 }).WithMessage($"Incorrect password");

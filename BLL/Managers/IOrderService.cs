@@ -8,9 +8,10 @@ namespace BLL.Managers
 {
     public interface IOrderService
     {
-        Order GetOrderByUserId(Guid userId);
+        IEnumerable<Order> GetOrdersByUserId(Guid userId);
         void Create(Order cart);
         void Update(Order cart);
         Task<Order> GetOrderById(int orderId);
+        Task<IEnumerable<Order>> GetAllOrders();
     }
 }

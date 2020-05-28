@@ -16,7 +16,8 @@ namespace DAL.Finder
 
         public IEnumerable<OrderItem> GetOrderItemsByOrderId(int orderId)
         {
-            return AsQueryable().Include(y => y.Product).Where(x => x.OrderId == orderId);
+            //return AsQueryable().Include(y => y.Product).Where(x => x.OrderId == orderId);
+            return AsQueryable().Include(y => y.Availability).Where(x => x.OrderId == orderId);
         }
     }
 }

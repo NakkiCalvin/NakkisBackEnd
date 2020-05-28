@@ -18,6 +18,7 @@ namespace DAL
             builder.RegisterType<Repository<Variant>>().AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<Repository<Cart>>().AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<Repository<CartItem>>().AsImplementedInterfaces().InstancePerLifetimeScope();
+            builder.RegisterType<Repository<Availability>>().AsImplementedInterfaces().InstancePerLifetimeScope();
 
             builder.RegisterAssemblyTypes(ThisAssembly)
                 .Where(x => x.Name.EndsWith("Finder"))

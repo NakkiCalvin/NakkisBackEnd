@@ -8,7 +8,8 @@ namespace BLL.Finders
 {
     public interface IOrderFinder
     {
-        Order GetOrderByUserId(Guid userId);
+        IEnumerable<Order> GetOrdersByUserId(Guid userId);
         Task<Order> GetOrderById(int orderId);
+        Task<IEnumerable<Order>> GetAllOrders();
     }
 }

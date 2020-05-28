@@ -16,11 +16,15 @@ namespace DAL.Finder
 
         public Product GetById(int id)
         {
-            var product = AsQueryable().FirstOrDefault(x => x.Id == id);
-            var allSizeProducts = AsQueryable().Where(_ => _.ImagePath == product.ImagePath && _.Id != product.Id).ToList();
-            var productSizes = allSizeProducts.Select(x => x.Size);
-            product.VariantSizes = productSizes;
-                //sizes.Add(variant.ImagePath, productSizes);
+            //var product = AsQueryable().FirstOrDefault(x => x.Id == id);
+            //var allSizeProducts = AsQueryable().Where(_ => _.ImagePath == product.ImagePath && _.Id != product.Id).ToList();
+            //var productSizes = allSizeProducts.Select(x => x.Size);
+            //product.VariantSizes = productSizes;
+            //return product;
+            var product = AsQueryable().Include(y => y.Variants).FirstOrDefault(x => x.Id == id);
+            //var allSizeProducts = AsQueryable().Where(_ => _.ImagePath == product.ImagePath && _.Id != product.Id).ToList();
+            //var productSizes = allSizeProducts.Select(x => x.Size);
+            //product.VariantSizes = productSizes;
             return product;
         }
 
@@ -31,23 +35,26 @@ namespace DAL.Finder
 
         public IEnumerable<Product> GetVariantsByProductId(int productId)
         {
-            var product = AsQueryable().FirstOrDefault(_ => _.Id == productId);
-            var allSizeVariants = AsQueryable().Where(_ => _.Title == product.Title && _.ImagePath != product.ImagePath && _.Id != product.Id).ToList();
-            var variants = allSizeVariants.GroupBy(x => x.ImagePath).Select(g => g.First()).ToList();
-            //var sizes = new Dictionary<string, List<string>>();
-            foreach (var variant in variants)
-            {
-                var productSizes = allSizeVariants.Where(y => y.ImagePath == variant.ImagePath).Select(x => x.Size);
-                variant.VariantSizes = productSizes;
-                //sizes.Add(variant.ImagePath, productSizes);
-            }
-            return variants;
+            //var product = AsQueryable().FirstOrDefault(_ => _.Id == productId);
+            //var allSizeVariants = AsQueryable().Where(_ => _.Title == product.Title && _.ImagePath != product.ImagePath && _.Id != product.Id).ToList();
+            //var variants = allSizeVariants.GroupBy(x => x.ImagePath).Select(g => g.First()).ToList();
+            ////var sizes = new Dictionary<string, List<string>>();
+            //foreach (var variant in variants)
+            //{
+            //    var productSizes = allSizeVariants.Where(y => y.ImagePath == variant.ImagePath).Select(x => x.Size);
+            //    variant.VariantSizes = productSizes;
+            //    //sizes.Add(variant.ImagePath, productSizes);
+            //}
+
+            var product = AsQueryable().Include(y => y.Variants);
+            return product;
+
+            //return variants;
         }
 
         public IEnumerable<Product> GetAll(string department, string category, string order, string range)
         {
-            var result = AsQueryable().Include(c => c.Department).Include(y => y.Category).ToList();
-            result = result.GroupBy(p => p.Title).Select(g => g.First()).ToList();
+            var result = AsQueryable().Include(z => z.Variants).Include(c => c.Department).Include(y => y.Category).ToList();
 
             if (category != null)
             {
@@ -70,6 +77,8 @@ namespace DAL.Finder
             }
             if (range != null)
             {
+                var rangeArray = range.Split('-');
+                result = result.Where(_ => _.Price >= double.Parse(rangeArray[0]) && _.Price <= double.Parse(rangeArray[1])).ToList();
                 if (range == "0-29")
                 {
                     result = result.Where(_ => _.Price <= 29).ToList();
@@ -91,6 +100,19 @@ namespace DAL.Finder
                     result = result.Where(_ => _.Price >= 89 && _.Price <= 999).ToList();
                 }
             }
+            //if (size != null)
+            //{
+            //    var variants = result.Select(x => x.Variants);
+            //    foreach (var variant in variants)
+            //    {
+            //        var array = variant.Where(x => x.Color == "Original");
+            //        var res = new List<Product>();
+            //        foreach (var item in array)
+            //        {
+            //            res.Add(item.Availabilities.Where(x => x.Size.ToString() == size).Select(y => y.Variant.Product).FirstOrDefault());
+            //        }
+            //    }
+            //}
             return result;
         }
 

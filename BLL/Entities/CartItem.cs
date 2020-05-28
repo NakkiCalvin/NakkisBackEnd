@@ -8,8 +8,13 @@ namespace BLL.Entities
     {
         public int CartId { get; set; }
         public Cart Cart { get; set; }
-        public int ProductId { get; set; }
-        public Product Product { get; set; }
+
+        public int AvailabilityId { get; set; }
+        public Availability Availability { get; set; }
+
+        //public int ProductId { get; set; }
+        //public Product Product { get; set; }
+
         //public int? VariantId { get; set; }
         //public Variant Variant { get; set; }
         public int Qty { get; set; }

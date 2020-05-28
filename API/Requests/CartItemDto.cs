@@ -1,4 +1,5 @@
-﻿using BLL.Entities;
+﻿using API.Responses;
+using BLL.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,8 @@ namespace API.Requests
 {
     public class CartItemDto
     {
-        public Product Item { get; set; }
+        //public Product Item { get; set; }
+        public ResponseProductModel Item { get; set; }
         public int Qty { get; set; }
         public double Price { get; set; }
     }

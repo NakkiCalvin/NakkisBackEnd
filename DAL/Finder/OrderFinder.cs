@@ -15,14 +15,19 @@ namespace DAL.Finder
         {
         }
 
-        public Order GetOrderByUserId(Guid userId)
+        public IEnumerable<Order> GetOrdersByUserId(Guid userId)
         {
-            return AsQueryable().Include(c => c.User).Include(y => y.OrderItems).FirstOrDefault(x => x.UserId == userId);
+            return AsQueryable().Include(c => c.User).Include(y => y.OrderItems).Where(x => x.UserId == userId).ToList();
         }
 
         public async Task<Order> GetOrderById(int orderId)
         {
             return await AsQueryable().Where(x => x.Id == orderId).FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<Order>> GetAllOrders()
+        {
+            return await AsQueryable().ToListAsync();
         }
     }
 }

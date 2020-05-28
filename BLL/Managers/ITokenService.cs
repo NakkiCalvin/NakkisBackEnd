@@ -1,7 +1,10 @@
-﻿namespace BLL.Managers
+﻿using BLL.Entities;
+using System.Collections.Generic;
+
+namespace BLL.Managers
 {
     public interface ITokenService
     {
-        string GetEncodedJwtToken(string userEmail);
+        string GetEncodedJwtToken(IList<string> userRoles, string userEmail);
     }
 }

@@ -22,9 +22,9 @@ namespace BLL.Services
             _finder = finder;
         }
 
-        public Order GetOrderByUserId(Guid userId)
+        public IEnumerable<Order> GetOrdersByUserId(Guid userId)
         {
-            return _finder.GetOrderByUserId(userId);
+            return _finder.GetOrdersByUserId(userId);
         }
 
         public async Task<Order> GetOrderById(int orderId)
@@ -44,6 +44,11 @@ namespace BLL.Services
             if (order == null) return;
             _repository.Update(order);
             _unitOfWork.Commit();
+        }
+
+        public async Task<IEnumerable<Order>> GetAllOrders()
+        {
+            return await _finder.GetAllOrders();
         }
     }
 }

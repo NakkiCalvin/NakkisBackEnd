@@ -16,7 +16,7 @@ namespace DAL.Finder
 
         public IEnumerable<Variant> GetAllById(int productId)
         {
-            return AsQueryable().Where(_ => _.ProductId == productId).ToList();
+            return AsQueryable().Include(y => y.Availabilities).Include(x => x.Product).Where(_ => _.ProductId == productId).ToList();
         }
     }
 }

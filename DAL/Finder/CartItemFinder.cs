@@ -16,7 +16,8 @@ namespace DAL.Finder
 
         public IEnumerable<CartItem> GetCartItemsByCartId(int cartId)
         {
-            return AsQueryable().Include(y => y.Product).Where(x => x.CartId == cartId);
+            //return AsQueryable().Include(y => y.Product).Where(x => x.CartId == cartId);
+            return AsQueryable().Include(y => y.Availability).ThenInclude(z => z.Variant).ThenInclude(o => o.Product).Where(x => x.CartId == cartId);
         }
     }
 }

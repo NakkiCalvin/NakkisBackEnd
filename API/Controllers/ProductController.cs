@@ -40,6 +40,7 @@ namespace API.Controllers
         private readonly ICartItemsService _cartItemService;
         private readonly IOrderService _orderService;
         private readonly IOrderItemService _orderItemService;
+        private readonly IAvailabilityService _availabilityService;
 
         public ProductController(
             IUserManager userManager,
@@ -52,10 +53,12 @@ namespace API.Controllers
             ICartService cartService,
             ICartItemsService cartItemService,
             IOrderService orderService,
-            IOrderItemService orderItemService
+            IOrderItemService orderItemService,
+            IAvailabilityService availabilityService
             )
         {
             _service = service;
+            _availabilityService = availabilityService;
             _cartService = cartService;
             _cartItemService = cartItemService;
             _variantService = variantService;
@@ -75,6 +78,12 @@ namespace API.Controllers
             {
                 var entities = _service.GetAll(null, null, null, null).Where(x => x.Title == query || x.Category.CategoryName == query || x.Department.DepartmentName == query);
                 var products = Mapper.Map<IEnumerable<ResponseProductModel>>(entities);
+                foreach (var entity in products)
+                {
+                    var original = _variantService.GetAllById(entity.Id).FirstOrDefault(x => x.Color == "Original");
+                    entity.Color = original.Color;
+                    entity.VariantSizes = original.Availabilities.Select(x => x.Size.ToString());
+                }
                 var res = new { products };
                 return res;
             }
@@ -82,16 +91,47 @@ namespace API.Controllers
             {
                 var entities = _service.GetAll(null, null, null, null);
                 var products = Mapper.Map<IEnumerable<ResponseProductModel>>(entities);
+                foreach (var entity in products)
+                {
+                    var original = _variantService.GetAllById(entity.Id).FirstOrDefault(x => x.Color == "Original");
+                    entity.Color = original.Color;
+                    entity.VariantSizes = original.Availabilities.Select(x => x.Size.ToString());
+                }
                 var res = new { products };
                 return res;
             }
         }
 
         [HttpGet]
-        public object GetAllProducts([FromQuery] string department, [FromQuery] string category, [FromQuery] string order, [FromQuery] string range)
+        public async Task<object> GetAllProducts([FromQuery] string department, [FromQuery] string category, [FromQuery] string order, [FromQuery] string range, [FromQuery] string size)
         {
             var entities = _service.GetAll(department, category, order, range);
+
+            if (size != null)
+            {
+                var avale = await _availabilityService.GetAvailabilites();
+                var idArray = avale.Where(x => x.Size == int.Parse(size) && x.Variant.Color == "Original").Select(y => y.Variant.ProductId);
+                var productFilteredBySize = new List<Product>();
+                foreach (var entity in entities)
+                {
+                    foreach (var id in idArray)
+                    {
+                        if (entity.Id == id)
+                        {
+                            productFilteredBySize.Add(entity);
+                        }
+                    }
+                }
+                entities = productFilteredBySize;
+            }
+            
             var products = Mapper.Map<IEnumerable<ResponseProductModel>>(entities);
+            foreach (var entity in products)
+            {
+                var original = _variantService.GetAllById(entity.Id).FirstOrDefault(x => x.Color == "Original");
+                entity.Color = original.Color;
+                entity.VariantSizes = original.Availabilities.Select(x => x.Size.ToString());
+            }
             var res = new { products };
             return res;
         }
@@ -101,25 +141,43 @@ namespace API.Controllers
         {
             var entity = _service.GetProduct(productId);
             var product = Mapper.Map<Product, ResponseProductModel>(entity);
+            var original = _variantService.GetAllById(entity.Id).FirstOrDefault(x => x.Color == "Original");
+            product.VariantId = original.Id;
+            product.Color = original.Color;
+            product.VariantSizes = original.Availabilities.Select(x => x.Size.ToString());
+            var sizeDictionary = new Dictionary<string, int>();
+            foreach (var item in original.Availabilities)
+            {
+                sizeDictionary.Add(item.Size.ToString(), item.Quantity);
+            }
+            product.QuantitySizes = sizeDictionary;
             var res = new { product };
             return res;
-            //var user = await GetActualUser();
-            //_logger.LogTrace($"Getting {user.Email} books...");
-            //IEnumerable<Book> userBookList = _bookService.GetAll(user.Id);
-            //Book[] books = userBookList.ToArray();
-            //_logger.LogTrace($"{user.Email} books was successfully found");
-            //return books;
         }
 
         [HttpGet("variants")]
         public object GetAllProductVariants([FromQuery] int productId)
         {
-            var variants = _service.GetVariantsByProductId(productId);
+            var entities = _variantService.GetAllById(productId).Where(x => x.Color != "Original");
+
+            var variants = new List<ResponseProductModel>();
+            foreach (var variant in entities)
+            {
+                var prod = Mapper.Map<Product, ResponseProductModel>(variant.Product);
+                prod.VariantId = variant.Id;
+                prod.Color = variant.Color;
+                prod.ImagePath = variant.ImagePath;
+                prod.VariantSizes = variant.Availabilities.Select(x => x.Size.ToString());
+                var sizeDictionary = new Dictionary<string, int>();
+                foreach (var item in variant.Availabilities)
+                {
+                    sizeDictionary.Add(item.Size.ToString(), item.Quantity);
+                }
+                prod.QuantitySizes = sizeDictionary;
+                variants.Add(prod);
+            }
             var res = new { variants };
             return res;
-            //var variants = _variantService.GetAllById(productId);
-            //var res = new { variants };
-            //return res;
         }
 
         [HttpGet("payment/success")]
@@ -167,7 +225,7 @@ namespace API.Controllers
 
                 foreach (var item in userCart.CartItems)
                 {
-                    var orderitem = new OrderItem { OrderId = order.Id, ProductId = item.ProductId, Price = item.Price, Qty = item.Qty };
+                    var orderitem = new OrderItem { OrderId = order.Id, AvailabilityId = item.AvailabilityId, Price = item.Price, Qty = item.Qty };
                     _orderItemService.Create(orderitem);
                 }
 
@@ -204,19 +262,19 @@ namespace API.Controllers
                 items.Add(
                     new Item
                     {
-                        Name = item.Product.Title,
-                        Description = item.Product.Description.Substring(0, 10),
+                        Name = item.Availability.Variant.Product.Title,
+                        Description = item.Availability.Variant.Product.Description.Substring(0, 10),
                         Sku = "sku01",
                         UnitAmount = new Money
                         {
                             CurrencyCode = "USD",
-                            Value = item.Product.Price.ToString(CultureInfo.InvariantCulture),
+                            Value = Math.Round(item.Availability.Variant.Product.Price, 2).ToString(CultureInfo.InvariantCulture),
                         },
-                        //Tax = new Money
-                        //{
-                        //    CurrencyCode = "USD",
-                        //    Value = "10.00"
-                        //},
+                        Tax = new Money
+                        {
+                            CurrencyCode = "USD",
+                            Value = Math.Round(item.Availability.Variant.Product.Price * 0.13, 2).ToString(CultureInfo.InvariantCulture)
+                        },
                         Quantity = item.Qty.ToString(),
                         //Category = item.Product.Category.CategoryName,
                     });
@@ -322,8 +380,8 @@ namespace API.Controllers
                 CheckoutPaymentIntent = "CAPTURE",
                 ApplicationContext = new ApplicationContext
                 {
-                    ReturnUrl = "http://localhost:3000/success_page",
-                    CancelUrl = "http://localhost:3000/cancel_page",
+                    ReturnUrl = "https://api20200526110933.azurewebsites.net/success_page",
+                    CancelUrl = "https://api20200526110933.azurewebsites.net/cancel_page",
                     BrandName = "Nakkis INC",
                     LandingPage = "BILLING",
                     UserAction = "CONTINUE",
@@ -339,13 +397,13 @@ namespace API.Controllers
                 AmountWithBreakdown = new AmountWithBreakdown
                 {
                     CurrencyCode = "USD",
-                    Value = currenctCart.TotalPrice.ToString(CultureInfo.InvariantCulture),
+                    Value = (Math.Round(currenctCart.TotalPrice * 0.13, 2) + currenctCart.TotalPrice).ToString(CultureInfo.InvariantCulture),
                     AmountBreakdown = new AmountBreakdown
                     {
                     ItemTotal = new Money
                     {
                         CurrencyCode = "USD",
-                        Value = currenctCart.TotalPrice.ToString(CultureInfo.InvariantCulture)
+                        Value = Math.Round(currenctCart.TotalPrice, 2).ToString(CultureInfo.InvariantCulture)
                     },
                     Shipping = new Money
                     {
@@ -357,11 +415,11 @@ namespace API.Controllers
                     //    CurrencyCode = "USD",
                     //    Value = "10.00"
                     //},
-                    //TaxTotal = new Money
-                    //{
-                    //    CurrencyCode = "USD",
-                    //    Value = "20.00"
-                    //},
+                    TaxTotal = new Money
+                    {
+                        CurrencyCode = "USD",
+                        Value = Math.Round(currenctCart.TotalPrice * 0.13, 2).ToString(CultureInfo.InvariantCulture)
+                    },
                     //ShippingDiscount = new Money
                     //{
                     //    CurrencyCode = "USD",

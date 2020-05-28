@@ -1,0 +1,23 @@
+{
+  "main.css": "/static/css/main.ca549206.chunk.css",
+  "main.js": "/static/js/main.be76dbc2.chunk.js",
+  "main.js.map": "/static/js/main.be76dbc2.chunk.js.map",
+  "runtime~main.js": "/static/js/runtime~main.a8a9905a.js",
+  "runtime~main.js.map": "/static/js/runtime~main.a8a9905a.js.map",
+  "static/css/2.833f1bd2.chunk.css": "/static/css/2.833f1bd2.chunk.css",
+  "static/js/2.87171dd6.chunk.js": "/static/js/2.87171dd6.chunk.js",
+  "static/js/2.87171dd6.chunk.js.map": "/static/js/2.87171dd6.chunk.js.map",
+  "index.html": "/index.html",
+  "precache-manifest.f646a324e912ddee99d5c739f3e1a086.js": "/precache-manifest.f646a324e912ddee99d5c739f3e1a086.js",
+  "service-worker.js": "/service-worker.js",
+  "static/css/2.833f1bd2.chunk.css.map": "/static/css/2.833f1bd2.chunk.css.map",
+  "static/css/main.ca549206.chunk.css.map": "/static/css/main.ca549206.chunk.css.map",
+  "static/media/loginsignin.module.sass": "/static/media/background.175b6de1.jpg",
+  "static/media/checkmark.svg": "/static/media/checkmark.d22fd416.svg",
+  "static/media/item1.jpg": "/static/media/item1.6c426583.jpg",
+  "static/media/item2.jpg": "/static/media/item2.8779dd15.jpg",
+  "static/media/item3.jpg": "/static/media/item3.9bd2546f.jpg",
+  "static/media/item4.jpg": "/static/media/item4.65bc33d7.jpg",
+  "static/media/item6.jpg": "/static/media/item6.f5fd97b5.jpg",
+  "static/media/loading-bars.svg": "/static/media/loading-bars.e0fae681.svg"
+}

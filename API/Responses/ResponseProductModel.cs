@@ -15,10 +15,12 @@ namespace API.Responses
         public string Color { get; set; }
         public string Size { get; set; }
         public int Quantity { get; set; }
+        public IDictionary<string, int> QuantitySizes { get; set; }
         public string Department { get; set; }
         public int DepartmentId { get; set; }
         public int CategoryId { get; set; }
         public string Category { get; set; }
+        public int? VariantId { get; set; }
         public IEnumerable<string> VariantSizes { get; set; }
     }
 }
